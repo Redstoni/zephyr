@@ -1,3 +1,187 @@
+
+# Quick Command Reference – BIE-IOT Zephyr
+
+## 1. Clone the repository
+
+```bash
+git clone <YOUR_REPOSITORY_URL>
+cd zephyr-m5-fit-main
+```
+
+Use your own GitHub repository URL if you have uploaded your assignments there.
+
+To update an existing clone:
+
+```bash
+git pull
+```
+
+## 2. Activate the Zephyr environment
+
+```bash
+source ~/zephyrproject/.venv/bin/activate
+export ZEPHYR_BASE=~/zephyrproject/zephyr
+```
+
+Check installation:
+
+```bash
+west --version
+```
+
+## 3. Build an assignment
+
+Run these commands from the repository root.
+
+Select the task:
+
+```bash
+TASK=task1-shell
+```
+
+Available tasks:
+- `task1-shell`
+- `task2-buttons-display`
+- `task3-state-machine`
+- `task4-microphone`
+
+Build:
+
+```bash
+west build -p always \
+  -b m5stack_fire/esp32/procpu \
+  -d build assignments/$TASK
+```
+
+To build a different task, change the TASK variable and run the build command again.
+
+## 4. Connect the M5Stack Fire
+
+Connect the device using a USB data cable.
+
+Find the serial port:
+
+```bash
+ls /dev/ttyUSB* /dev/ttyACM*
+```
+
+If permission is denied:
+
+```bash
+sudo usermod -aG dialout $USER
+```
+
+Log out and back in for the group change to apply.
+
+## 5. Flash the application
+
+After building:
+
+```bash
+west flash -d build
+```
+
+Specify the serial port if necessary:
+
+```bash
+west flash -d build --esp-device /dev/ttyUSB0
+```
+
+Close any serial monitor before flashing.
+
+## 6. Open the serial console
+
+```bash
+picocom -b 115200 /dev/ttyUSB0
+```
+
+Change the port if necessary.
+
+Exit picocom:
+
+`Ctrl+A`, then `Ctrl+X`
+
+For Task 1, test the shell command:
+
+```text
+hello
+```
+
+Expected output:
+
+```text
+Hello from Zephyr!
+```
+
+## 7. Useful troubleshooting commands
+
+Clean and rebuild:
+
+```bash
+west build -p always \
+  -b m5stack_fire/esp32/procpu \
+  -d build assignments/$TASK
+```
+
+Check connected USB devices:
+
+```bash
+lsusb
+```
+
+Check serial device permissions:
+
+```bash
+ls -l /dev/ttyUSB0
+```
+
+Find running serial-monitor processes:
+
+```bash
+lsof /dev/ttyUSB0
+```
+
+## 8. Quick lab workflow
+
+```bash
+# Select task
+TASK=task2-buttons-display
+
+# Build
+west build -p always -b m5stack_fire/esp32/procpu \
+  -d build assignments/$TASK
+
+# Flash
+west flash -d build
+
+# Monitor output
+picocom -b 115200 /dev/ttyUSB0
+```
+
+Repeat for each assignment.
+
+## 9. Git commands
+
+Check changes:
+
+```bash
+git status
+```
+
+Save changes:
+
+```bash
+git add .
+git commit -m "Update Zephyr assignments"
+```
+
+Upload to GitHub:
+
+```bash
+git push
+```
+
+
 # zephyr-m5-fit
 
 Code examples for the BI-IOT/BIE-IOT tutorials, targeting the **real**
