@@ -1,3 +1,7 @@
 22.10.2026
 10.42.0.1:5020 <- on wifi
 10.3.44.175:5020 <- from eduroam
+/color
+/change
+/green/yellow/red/blue
+Network BIOT (WiFi)
