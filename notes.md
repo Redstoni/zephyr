@@ -4,4 +4,5 @@
 /color
 /change
 /green/yellow/red/blue
-Network BIOT (WiFi)
+Network SSID: "BI-IOT" (WiFi)
+or "BIOT"

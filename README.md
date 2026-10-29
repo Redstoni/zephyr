@@ -1,187 +1,3 @@
-
-# Quick Command Reference – BIE-IOT Zephyr
-
-## 1. Clone the repository
-
-```bash
-git clone <YOUR_REPOSITORY_URL>
-cd zephyr-m5-fit-main
-```
-
-Use your own GitHub repository URL if you have uploaded your assignments there.
-
-To update an existing clone:
-
-```bash
-git pull
-```
-
-## 2. Activate the Zephyr environment
-
-```bash
-source ~/zephyrproject/.venv/bin/activate
-export ZEPHYR_BASE=~/zephyrproject/zephyr
-```
-
-Check installation:
-
-```bash
-west --version
-```
-
-## 3. Build an assignment
-
-Run these commands from the repository root.
-
-Select the task:
-
-```bash
-TASK=task1-shell
-```
-
-Available tasks:
-- `task1-shell`
-- `task2-buttons-display`
-- `task3-state-machine`
-- `task4-microphone`
-
-Build:
-
-```bash
-west build -p always \
-  -b m5stack_fire/esp32/procpu \
-  -d build assignments/$TASK
-```
-
-To build a different task, change the TASK variable and run the build command again.
-
-## 4. Connect the M5Stack Fire
-
-Connect the device using a USB data cable.
-
-Find the serial port:
-
-```bash
-ls /dev/ttyUSB* /dev/ttyACM*
-```
-
-If permission is denied:
-
-```bash
-sudo usermod -aG dialout $USER
-```
-
-Log out and back in for the group change to apply.
-
-## 5. Flash the application
-
-After building:
-
-```bash
-west flash -d build
-```
-
-Specify the serial port if necessary:
-
-```bash
-west flash -d build --esp-device /dev/ttyUSB0
-```
-
-Close any serial monitor before flashing.
-
-## 6. Open the serial console
-
-```bash
-picocom -b 115200 /dev/ttyUSB0
-```
-
-Change the port if necessary.
-
-Exit picocom:
-
-`Ctrl+A`, then `Ctrl+X`
-
-For Task 1, test the shell command:
-
-```text
-hello
-```
-
-Expected output:
-
-```text
-Hello from Zephyr!
-```
-
-## 7. Useful troubleshooting commands
-
-Clean and rebuild:
-
-```bash
-west build -p always \
-  -b m5stack_fire/esp32/procpu \
-  -d build assignments/$TASK
-```
-
-Check connected USB devices:
-
-```bash
-lsusb
-```
-
-Check serial device permissions:
-
-```bash
-ls -l /dev/ttyUSB0
-```
-
-Find running serial-monitor processes:
-
-```bash
-lsof /dev/ttyUSB0
-```
-
-## 8. Quick lab workflow
-
-```bash
-# Select task
-TASK=task2-buttons-display
-
-# Build
-west build -p always -b m5stack_fire/esp32/procpu \
-  -d build assignments/$TASK
-
-# Flash
-west flash -d build
-
-# Monitor output
-picocom -b 115200 /dev/ttyUSB0
-```
-
-Repeat for each assignment.
-
-## 9. Git commands
-
-Check changes:
-
-```bash
-git status
-```
-
-Save changes:
-
-```bash
-git add .
-git commit -m "Update Zephyr assignments"
-```
-
-Upload to GitHub:
-
-```bash
-git push
-```
-
-
 # zephyr-m5-fit
 
 Code examples for the BI-IOT/BIE-IOT tutorials, targeting the **real**
@@ -227,12 +43,65 @@ for the pattern.
 | [04-led-shell](04-led-shell) | Same LED strip, plus `led off`/`led on` shell commands — and why turning WS2812 LEDs off needs an explicit command, not just a different app. |
 | [05-display](05-display) | Fills the built-in 320×240 color screen with cycling colors via Zephyr's `CONFIG_DISPLAY` driver API — and why the higher-level Character Framebuffer subsystem *doesn't* work here (it's mono-only). |
 | [06-text](06-text) | Renders real text on the screen without LVGL — a hand-rolled bitmap-font renderer in `common/`, and why Zephyr's own CFB text subsystem can't drive this panel's color output either. |
+| [07-wifi](07-wifi) | Connects to Wi-Fi using a credential provisioned once over the shell (`wifi cred add`) — never hardcoded in source — and why Zephyr's `net_mgmt` events, not a blocking connect call, are how you find out the result. |
+| [08-http](08-http) | Polls a small HTTP color server and drives the LED strip from the response, with a button press triggering a `POST` — ties `07-wifi` together with `02-buttons` and `03-led-strip`, plus Zephyr's HTTP client API. |
+| [09-gyroscope](09-gyroscope) | Reads the onboard MPU6886 gyroscope from a dedicated sampling thread and publishes each reading on a zbus channel, with a subscriber that logs it — the template for every sensor/actuator example to follow. |
+| [10-humidity](10-humidity) | Same template as `09-gyroscope`, applied to an M5Stack "Unit Earth" analog soil/humidity probe on Grove Port B — read via raw ADC/GPIO rather than a sensor driver, since none exists for this probe. |
+| [11-light](11-light) | Same template again, applied to an M5Stack "Light" analog photoresistor — also on Grove Port B (same pin as `10-humidity`, so only one of the two can be plugged in at a time). Reports raw ADC counts, no invented lux formula. |
+| [12-pir-motion](12-pir-motion) | Same template once more, applied to an M5Stack PIR Motion Unit — plain digital GPIO on Grove Port B, no ADC involved. Publishes only on a state change, not every poll, since motion is event-shaped rather than continuously varying. |
+| [13-angle](13-angle) | Same template again, applied to an M5Stack Angle Unit (a potentiometer) — back on Grove Port B's ADC pin (same as `10-humidity`/`11-light`). Reports raw counts plus a left/right/none turn direction, no invented degrees formula. |
+| [14-keyboard](14-keyboard) | Same template again, applied to an M5Stack CardKB Mini Keyboard Unit — I2C on Grove Port A (not Port B, so it doesn't conflict with any of the four above), no sensor driver for it either. Publishes only on a press/release change. |
+
+## Which examples can be combined
+
+| Grove port / pin | Sensor examples there |
+|---|---|
+| Port B, D0 — GPIO36 (analog/digital) | `10-humidity` (analog reading), `11-light`, `12-pir-motion`, `13-angle` |
+| Port B, D1 — GPIO26 (digital) | `10-humidity` (wet/dry threshold signal) |
+| Port A — I2C, GPIO21/22 | `09-gyroscope` (onboard MPU6886, not actually on the Grove port, but the same bus), `14-keyboard` (I2C address 0x5F) |
+
+Only one Grove cable fits Port B at a time, so `10-humidity`,
+`11-light`, `12-pir-motion`, and `13-angle` are mutually exclusive —
+whichever of the four is physically plugged in is the only one that
+will read anything meaningful, regardless of which one you flash.
+
+`14-keyboard` uses Port A instead, so it doesn't conflict with any of
+the four Port B examples - you can have one Port B sensor and
+`14-keyboard` both plugged in and working at the same time. `09-gyroscope`
+is on the same I2C bus as `14-keyboard` but doesn't use the Grove
+connector (the MPU6886 is onboard), so it's compatible with everything.
+Everything from `01-hello` through `08-http` doesn't touch either Grove
+port.
+
+If you want two Port-B-style sensors active simultaneously in your own
+project, you'd need to wire one of them to a different port/pin
+yourself — none of these examples do that for you.
 
 [`experimental-lvgl`](experimental-lvgl) also exists — an LVGL-based demo
 with button-switched modes — but it's parked: real hardware testing hit a
 reproducible crash-reboot loop that hasn't been root-caused yet (see its
 own README). Not part of the main numbered sequence until that's
 resolved.
+
+## Known issue: using the ADC makes a sound
+
+Yes — on real hardware, reading the ADC makes the onboard speaker
+audibly click, and it's hard to get rid of for now. The ESP32 ADC
+driver re-applies a hardware calibration code on every single read
+(`adc_set_hw_calibration_code()`, unconditional, in
+`drivers/adc/adc_esp32.c`), and that's what couples into the speaker —
+not something any example here does wrong, and there's no Kconfig or
+driver option to turn it off.
+
+It scales with how often you call `adc_read_dt()`: sampling a few times
+a second is audible as constant clicking, sampling once every couple of
+seconds is just an occasional faint click. `10-humidity` and `11-light`
+both sample at a 2-second interval specifically for this reason — if you
+write your own ADC-based example, keep your read rate low for the same
+reason. `solutions/04-mic` is the exception: it needs 500Hz sampling to
+detect loudness at all, so slowing it down isn't an option there, and
+its noise is an open, unresolved limitation, documented in its own
+README rather than fixed.
 
 ## Build, flash, verify — the general pattern
 
